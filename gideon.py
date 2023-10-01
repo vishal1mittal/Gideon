@@ -1,38 +1,51 @@
 import speech_recognition as sr
 import pyttsx3
-import socket
-from MydataSets import *
-from VariablesAndCodes import *
-from Functioning_functions import *
-import random
-import re
 import pywhatkit as kt
+import random
 
+# Lists of user greetings and web search keywords
+user_Greetings = ["hello", "hi", "hey"]
+user_web_search = ["search", "find", "look up"]
 
-r1 = sr.Recognizer()
+# System responses
+system_Greetings = ["Hello!", "Hi there!", "Greetings!"]
+system_web_search = ["Sure, let me search that for you.", "Certainly, searching now."]
+
+# Initialize speech recognition and text-to-speech engines
 r2 = sr.Recognizer()
-r3 = sr.Recognizer()
-running_state = True
-while running_state:
-    with sr.Microphone() as source:
-        print("Listning")
-        audio = r3.listen(source)
 
-    recognized_text = r2.recognize_google(audio).lower()
-    print(recognized_text)
+def talk(message):
+    engine = pyttsx3.init()
+    engine.say(message)
+    engine.runAndWait()
 
+def handle_greetings(recognized_text):
     if any(x in recognized_text for x in user_Greetings):
-        
         talk(random.choice(system_Greetings))
 
-    elif recognized_text == "exit":
-        running_state = False
-
-
-    elif any(x in recognized_text for x in user_web_search):
+def handle_web_search(recognized_text):
+    if any(x in recognized_text for x in user_web_search):
         talk(random.choice(system_web_search))
-        talk("what should i search for sir?")
-
+        talk("What should I search for, sir?")
         with sr.Microphone() as source:
-            audio = r1.listen(source)
-        kt.search(r1.recognize_google(audio).lower())
+            audio = r2.listen(source)
+        search_query = r2.recognize_google(audio).lower()
+        kt.search(search_query)
+        talk(f"I found results for {search_query}. Would you like me to open a link?")
+
+# Main loop for speech recognition
+while True:
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = r2.listen(source)
+
+    try:
+        recognized_text = r2.recognize_google(audio).lower()
+        print("You said: " + recognized_text)
+        handle_greetings(recognized_text)
+        handle_web_search(recognized_text)
+
+    except sr.UnknownValueError:
+        print("Could not understand the audio")
+    except sr.RequestError as e:
+        print(f"Could not request results; {e}")
